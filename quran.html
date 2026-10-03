@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تطبيق حفظ القرآن الكريم - الإصدار الشامل</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f4c3a;
+    --bg2: #1a7f5a;
+    --card: rgba(255, 255, 255, 0.1);
+    --border: rgba(255, 255, 255, 0.2);
+    --gold: #ffd700;
+    --gold-hover: #ffed4e;
+    --danger: #e74c3c;
+    --success: #27ae60;
+    --text: #ffffff;
+    --text-dim: rgba(255, 255, 255, 0.7);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
+
+  body {
+    background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%);
+    min-height: 100vh;
+    padding: 15px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  .container { max-width: 900px; margin: 0 auto; }
+
+  header { text-align: center; margin-bottom: 20px; }
+  h1 { font-size: 1.8rem; color: var(--gold); margin-bottom: 5px; }
+  .subtitle { font-size: 0.9rem; color: var(--text-dim); }
+
+  .tabs {
+    display: flex; gap: 5px; margin-bottom: 20px;
+    background: rgba(0, 0, 0, 0.2); padding: 5px; border-radius: 12px;
+  }
+  .tab {
+    flex: 1; padding: 12px 5px; text-align: center; border-radius: 8px;
+    cursor: pointer; transition: 0.3s; background: transparent; border: none;
+    color: var(--text); font-size: 0.9rem; font-family: 'Tajawal', sans-serif;
+  }
+  .tab.active { background: var(--gold); color: var(--bg); font-weight: bold; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; animation: fadeIn 0.3s; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+  .card {
+    background: var(--card); backdrop-filter: blur(10px);
+    border-radius: 15px; padding: 20px; margin-bottom: 15px;
+    border: 1px solid var(--border);
+  }
+  .card h3 {
+    font-size: 1.05rem; margin-bottom: 15px; color: var(--gold);
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  label { display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--text-dim); }
+
+  select, input {
+    width: 100%; padding: 12px; border-radius: 10px;
+    border: 1px solid var(--border); background: rgba(255, 255, 255, 0.1);
+    color: var(--text); font-size: 1rem; margin-bottom: 12px; outline: none;
+    font-family: 'Tajawal', sans-serif;
+  }
+  select option { background: var(--bg); color: var(--text); }
+  select:focus, input:focus { border-color: var(--gold); }
+
+  button {
+    padding: 12px 20px; border-radius: 10px; border: none;
+    background: var(--gold); color: var(--bg); font-weight: bold;
+    font-size: 0.95rem; cursor: pointer; transition: 0.3s;
+    font-family: 'Tajawal', sans-serif;
+  }
+  button:hover { background: var(--gold-hover); transform: translateY(-1px); }
+  button:active { transform: translateY(0); }
+  button.danger { background: var(--danger); color: #fff; }
+  button.success { background: var(--success); color: #fff; }
+  button.secondary { background: rgba(255,255,255,0.2); color: #fff; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .verse-box {
+    font-family: 'Amiri Quran', 'Traditional Arabic', serif;
+    font-size: 1.6rem; line-height: 2.4; text-align: center;
+    padding: 25px 15px; background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px; margin: 15px 0; min-height: 120px;
+    display: flex; align-items: center; justify-content: center;
+    transition: filter 0.4s; position: relative;
+  }
+  .verse-box.hidden { filter: blur(15px); cursor: pointer; user-select: none; }
+  .verse-box.hidden:hover { filter: blur(12px); }
+
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .stat-card { background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: 10px; text-align: center; }
+  .stat-number { font-size: 2rem; font-weight: bold; color: var(--gold); }
+  .stat-label { font-size: 0.75rem; color: var(--text-dim); margin-top: 3px; }
+
+  .progress-bar { background: rgba(0, 0, 0, 0.3); border-radius: 10px; height: 22px; overflow: hidden; margin-top: 10px; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-hover)); transition: width 0.5s; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--bg); font-weight: bold; }
+
+  .saved-list { max-height: 300px; overflow-y: auto; }
+  .saved-item {
+    background: rgba(255, 255, 255, 0.05); padding: 10px 12px;
+    border-radius: 8px; margin-bottom: 6px; display: flex;
+    justify-content: space-between; align-items: center; font-size: 0.85rem;
+  }
+  .saved-item button { padding: 5px 10px; font-size: 0.75rem; }
+
+  .message { padding: 10px; border-radius: 8px; text-align: center; margin-top: 10px; font-size: 0.85rem; }
+  .message.success { background: rgba(39, 174, 96, 0.3); border: 1px solid var(--success); }
+  .message.error { background: rgba(231, 76, 60, 0.3); border: 1px solid var(--danger); }
+  .message.info { background: rgba(255, 215, 0, 0.15); border: 1px solid var(--gold); }
+
+  .daily-plan-info { display: flex; gap: 10px; align-items: center; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 10px; }
+  .daily-plan-info strong { color: var(--gold); }
+
+  .loading { text-align: center; padding: 20px; color: var(--text-dim); }
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .audio-controls { display: flex; gap: 8px; justify-content: center; align-items: center; margin-top: 10px; }
+  .audio-btn { background: rgba(255,255,255,0.15); color: #fff; padding: 8px 15px; font-size: 0.85rem; }
+  .audio-btn:hover { background: rgba(255,255,255,0.25); }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📖 رفيق الحفظ</h1>
+    <p class="subtitle">تطبيقك الشامل لحفظ ومراجعة القرآن الكريم</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('memorize', this)">🎯 الحفظ</button>
+    <button class="tab" onclick="switchTab('review', this)">🔄 المراجعة</button>
+    <button class="tab" onclick="switchTab('progress', this)">📊 التقدم</button>
+  </div>
+
+  <!-- تبويب الحفظ -->
+  <div id="memorize" class="tab-content active">
+    <div class="card">
+      <h3>🎯 خطة الحفظ اليومية</h3>
+      <div class="daily-plan-info">
+        <span>وردك اليومي: <strong id="dailyGoalDisplay">5 آيات</strong></span>
+        <span>|</span>
+        <span>أنجزت: <strong id="dailyDoneDisplay">0</strong></span>
+      </div>
+      <label>عدد الآيات يومياً:</label>
+      <select id="dailyGoalSelect" onchange="updateDailyGoal()">
+        <option value="1">آية واحدة (ختم في ~17 سنة)</option>
+        <option value="3">3 آيات (ختم في ~6 سنوات)</option>
+        <option value="5" selected>5 آيات (ختم في ~3.5 سنة)</option>
+        <option value="10">10 آيات (ختم في ~1.75 سنة)</option>
+        <option value="15">15 آية (ختم في ~سنة)</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <h3>📜 آية الحفظ</h3>
+      <div id="verseLoader" class="loading hidden"><div class="spinner"></div> جاري التحميل...</div>
+      <div id="verseBox" class="verse-box">اختر سورة من القائمة أدناه</div>
+      <div class="controls">
+        <button onclick="toggleHide()" id="hideBtn">👁️ إخفاء</button>
+        <button class="success" onclick="markMemorized()">✅ تم الحفظ</button>
+        <button class="secondary" onclick="nextVerse()">➡️ التالية</button>
+      </div>
+      <div class="audio-controls">
+        <button class="audio-btn" onclick="playCurrentAudio()" id="playBtn">▶️ تشغيل التلاوة</button>
+        <button class="audio-btn" onclick="stopAudio()">⏹️ إيقاف</button>
+      </div>
+      <div id="memorizeMessage"></div>
+    </div>
+
+    <div class="card">
+      <h3>🔍 اختر السورة والآية</h3>
+      <label>السورة:</label>
+      <select id="surahSelect" onchange="loadVerses()"></select>
+      <label>الآية:</label>
+      <select id="verseSelect" onchange="displaySelectedVerse()"></select>
+    </div>
+  </div>
+
+  <!-- تبويب المراجعة -->
+  <div id="review" class="tab-content">
+    <div class="card">
+      <h3>🔄 الآيات المحفوظة</h3>
+      <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:10px;">إجمالي المحفوظ: <strong id="totalSavedCount">0</strong> آية</p>
+      <div id="savedList" class="saved-list">
+        <p style="opacity:0.7; text-align:center; font-size:0.9rem;">لا توجد آيات محفوظة بعد</p>
+      </div>
+      <button onclick="startRandomReview()" style="width:100%; margin-top:12px;">🎲 مراجعة عشوائية</button>
+    </div>
+  </div>
+
+  <!-- تبويب التقدم -->
+  <div id="progress" class="tab-content">
+    <div class="card">
+      <h3>📊 إحصائياتك</h3>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="statMemorized">0</div>
+          <div class="stat-label">آية محفوظة</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="statStreak">0</div>
+          <div class="stat-label">أيام متواصلة</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="statReviews">0</div>
+          <div class="stat-label">مراجعة</div>
+        </div>
+      </div>
+      <div style="margin-top:20px;">
+        <label>تقدمك في الحفظ (الهدف: 6236 آية):</label>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width:0%;">0%</div>
+        </div>
+      </div>
+      <button class="danger" onclick="resetData()" style="width:100%; margin-top:20px;">🗑️ حذف جميع البيانات</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== الإعدادات الأساسية ====================
+const API_BASE = 'https://api.alquran.cloud/v1';
+const AUDIO_EDITION = 'ar.alafasy'; // تلاوة مشاري العفاسي
+
+// ==================== الحالة العامة ====================
+let state = {
+  surahs: [],           // قائمة السور
+  currentSurah: null,   // السورة الحالية
+  currentAyahs: [],     // آيات السورة الحالية
+  currentVerseIndex: 0, // فهرس الآية الحالية
+  isHidden: false,
+  audio: null,
+  dailyGoal: 5,
+  memorizedThisSession: 0
+};
+
+// ==================== تهيئة التطبيق ====================
+async function init() {
+  await loadSurahs();
+  loadUserData();
+  updateStats();
+  loadSavedList();
+  updateDailyPlanDisplay();
+  buildSurahSelect();
+}
+
+// ==================== جلب البيانات من API ====================
+async function loadSurahs() {
+  try {
+    const res = await fetch(`${API_BASE}/surah`);
+    const data = await res.json();
+    state.surahs = data.data;
+  } catch (e) {
+    console.error('فشل تحميل السور:', e);
+    // fallback للسور الأساسية
+    state.surahs = [
+      { number: 1, name: 'الفاتحة', englishName: 'Al-Fatihah', numberOfAyahs: 7 },
+      { number: 112, name: 'الإخلاص', englishName: 'Al-Ikhlas', numberOfAyahs: 4 },
+      { number: 113, name: 'الفلق', englishName: 'Al-Falaq', numberOfAyahs: 5 },
+      { number: 114, name: 'الناس', englishName: 'An-Nas', numberOfAyahs: 6 }
+    ];
+  }
+}
+
+async function loadSurahAyahs(surahNumber) {
+  showLoader(true);
+  try {
+    // جلب النص العربي
+    const textRes = await fetch(`${API_BASE}/surah/${surahNumber}/quran-uthmani`);
+    const textData = await textRes.json();
+    
+    // جلب الصوت
+    const audioRes = await fetch(`${API_BASE}/surah/${surahNumber}/${AUDIO_EDITION}`);
+    const audioData = await audioRes.json();
+
+    // دمج النص مع الصوت
+    state.currentAyahs = textData.data.ayahs.map((ayah, index) => ({
+      number: ayah.number,
+      numberInSurah: ayah.numberInSurah,
+      text: ayah.text,
+      audio: audioData.data.ayahs[index]?.audio || null
+    }));
+    
+    state.currentSurah = surahNumber;
+    state.currentVerseIndex = 0;
+    state.isHidden = false;
+    buildVerseSelect();
+    displayVerse(0);
+  } catch (e) {
+    console.error('فشل تحميل الآيات:', e);
+    showMessage('memorizeMessage', '❌ فشل تحميل الآيات. تأكد من اتصالك بالإنترنت.', 'error');
+  } finally {
+    showLoader(false);
+  }
+}
+
+// ==================== واجهة المستخدم ====================
+function buildSurahSelect() {
+  const select = document.getElementById('surahSelect');
+  select.innerHTML = '<option value="">-- اختر سورة --</option>';
+  state.surahs.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.number;
+    opt.textContent = `${s.number}. سورة ${s.name}`;
+    select.appendChild(opt);
+  });
+}
+
+function buildVerseSelect() {
+  const select = document.getElementById('verseSelect');
+  select.innerHTML = '<option value="">-- اختر آية --</option>';
+  state.currentAyahs.forEach((a, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `الآية ${a.numberInSurah}`;
+    select.appendChild(opt);
+  });
+  select.value = state.currentVerseIndex;
+}
+
+function displayVerse(index) {
+  state.currentVerseIndex = index;
+  const verse = state.currentAyahs[index];
+  if (!verse) return;
+  
+  const box = document.getElementById('verseBox');
+  box.textContent = verse.text;
+  box.classList.remove('hidden');
+  state.isHidden = false;
+  document.getElementById('hideBtn').textContent = '👁️ إخفاء';
+  document.getElementById('verseSelect').value = index;
+  document.getElementById('memorizeMessage').innerHTML = '';
+}
+
+function displaySelectedVerse() {
+  const idx = parseInt(document.getElementById('verseSelect').value);
+  if (!isNaN(idx) && state.currentAyahs[idx]) {
+    displayVerse(idx);
+  }
+}
+
+function loadVerses() {
+  const surahNum = parseInt(document.getElementById('surahSelect').value);
+  if (!surahNum) return;
+  loadSurahAyahs(surahNum);
+}
+
+function toggleHide() {
+  const box = document.getElementById('verseBox');
+  state.isHidden = !state.isHidden;
+  box.classList.toggle('hidden', state.isHidden);
+  document.getElementById('hideBtn').textContent = state.isHidden ? '👁️ إظهار' : '👁️ إخفاء';
+}
+
+function nextVerse() {
+  if (!state.currentAyahs.length) return;
+  if (state.currentVerseIndex < state.currentAyahs.length - 1) {
+    displayVerse(state.currentVerseIndex + 1);
+  } else {
+    showMessage('memorizeMessage', '🎉 وصلت لنهاية السورة', 'info');
+  }
+}
+
+// ==================== الصوت ====================
+function playCurrentAudio() {
+  const verse = state.currentAyahs[state.currentVerseIndex];
+  if (!verse || !verse.audio) {
+    showMessage('memorizeMessage', '⚠️ لا يتوفر صوت لهذه الآية', 'error');
+    return;
+  }
+  stopAudio();
+  state.audio = new Audio(verse.audio);
+  state.audio.play().catch(e => {
+    showMessage('memorizeMessage', '❌ فشل تشغيل الصوت', 'error');
+  });
+  document.getElementById('playBtn').textContent = '🔊 جاري التشغيل...';
+  state.audio.onended = () => {
+    document.getElementById('playBtn').textContent = '▶️ تشغيل التلاوة';
+  };
+}
+
+function stopAudio() {
+  if (state.audio) {
+    state.audio.pause();
+    state.audio.currentTime = 0;
+    state.audio = null;
+  }
+  document.getElementById('playBtn').textContent = '▶️ تشغيل التلاوة';
+}
+
+// ==================== الحفظ ====================
+function markMemorized() {
+  if (!state.currentAyahs.length) {
+    showMessage('memorizeMessage', '⚠️ اختر سورة وآية أولاً', 'error');
+    return;
+  }
+
+  const verse = state.currentAyahs[state.currentVerseIndex];
+  const key = `${state.currentSurah}-${verse.numberInSurah}`;
+  const saved = getSavedData();
+
+  if (saved[key]) {
+    showMessage('memorizeMessage', 'ℹ️ هذه الآية محفوظة مسبقاً', 'info');
+    return;
+  }
+
+  saved[key] = {
+    surah: state.currentSurah,
+    surahName: state.surahs.find(s => s.number === state.currentSurah)?.name || '',
+    verseNumber: verse.numberInSurah,
+    text: verse.text,
+    date: new Date().toISOString().split('T')[0]
+  };
+
+  localStorage.setItem('memorizedVerses', JSON.stringify(saved));
+  
+  // تحديث عداد الجلسة
+  state.memorizedThisSession++;
+  updateDailyPlanDisplay();
+  
+  // تسجيل اليوم في سجل النشاط
+  recordActivity();
+  
+  updateStats();
+  loadSavedList();
+  showMessage('memorizeMessage', '✅ ما شاء الله! تم حفظ الآية', 'success');
+  
+  // الانتقال للآية التالية تلقائياً
+  setTimeout(() => nextVerse(), 800);
+}
+
+// ==================== سجل النشاط (للـ Streak) ====================
+function recordActivity() {
+  const today = new Date().toISOString().split('T')[0];
+  let activity = JSON.parse(localStorage.getItem('activityLog') || '[]');
+  if (!activity.includes(today)) {
+    activity.push(today);
+    // الاحتفاظ بآخر 365 يوم فقط
+    if (activity.length > 365) activity = activity.slice(-365);
+    localStorage.setItem('activityLog', JSON.stringify(activity));
+  }
+}
+
+// ==================== إدارة البيانات ====================
+function getSavedData() {
+  return JSON.parse(localStorage.getItem('memorizedVerses') || '{}');
+}
+
+function updateStats() {
+  const saved = getSavedData();
+  const totalMemorized = Object.keys(saved).length;
+  const reviews = parseInt(localStorage.getItem('totalReviews') || '0');
+  const activity = JSON.parse(localStorage.getItem('activityLog') || '[]');
+  
+  document.getElementById('statMemorized').textContent = totalMemorized;
+  document.getElementById('statReviews').textContent = reviews;
+  
+  // حساب السلسلة الحقيقية
+  document.getElementById('statStreak').textContent = calculateStreak(activity);
+  
+  // شريط التقدم (الهدف: 6236 آية)
+  const percent = Math.min(100, (totalMemorized / 6236 * 100)).toFixed(1);
+  const fill = document.getElementById('progressFill');
+  fill.style.width = percent + '%';
+  fill.textContent = percent + '%';
+  
+  document.getElementById('totalSavedCount').textContent = totalMemorized;
+}
+
+// حساب السلسلة (Streak) بشكل صحيح
+function calculateStreak(dates) {
+  if (!dates.length) return 0;
+  const sorted = [...dates].sort().reverse();
+  const today = new Date().toISOString().split('T')[0];
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  
+  // إذا لم يسجل اليوم أو أمس، السلسلة صفر
+  if (sorted[0] !== today && sorted[0] !== yesterday) return 0;
+  
+  let streak = 1;
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const current = new Date(sorted[i]);
+    const next = new Date(sorted[i + 1]);
+    const diff = (current - next) / 86400000;
+    if (diff === 1) streak++;
+    else break;
+  }
+  return streak;
+}
+
+// ==================== خطة الحفظ اليومية ====================
+function updateDailyGoal() {
+  const val = parseInt(document.getElementById('dailyGoalSelect').value);
+  state.dailyGoal = val;
+  localStorage.setItem('dailyGoal', val);
+  state.memorizedThisSession = 0;
+  updateDailyPlanDisplay();
+}
+
+function updateDailyPlanDisplay() {
+  const today = new Date().toISOString().split('T')[0];
+  const saved = getSavedData();
+  const todayCount = Object.values(saved).filter(v => v.date === today).length;
+  
+  document.getElementById('dailyGoalDisplay').textContent = `${state.dailyGoal} آيات`;
+  document.getElementById('dailyDoneDisplay').textContent = todayCount;
+}
+
+function loadUserData() {
+  const goal = localStorage.getItem('dailyGoal');
+  if (goal) {
+    state.dailyGoal = parseInt(goal);
+    document.getElementById('dailyGoalSelect').value = goal;
+  }
+  state.memorizedThisSession = 0;
+}
+
+// ==================== قائمة المحفوظات ====================
+function loadSavedList() {
+  const saved = getSavedData();
+  const list = document.getElementById('savedList');
+  const keys = Object.keys(saved);
+  
+  if (keys.length === 0) {
+    list.innerHTML = '<p style="opacity:0.7; text-align:center; font-size:0.9rem;">لا توجد آيات محفوظة بعد</p>';
+    return;
+  }
+
+  // ترتيب حسب التاريخ (الأحدث أولاً)
+  const sorted = keys.sort((a, b) => new Date(saved[b].date) - new Date(saved[a].date));
+  
+  list.innerHTML = '';
+  sorted.slice(0, 50).forEach(key => {
+    const data = saved[key];
+    const item = document.createElement('div');
+    item.className = 'saved-item';
+    item.innerHTML = `
+      <span>${data.surahName} - آية ${data.verseNumber}</span>
+      <button class="danger" onclick="deleteVerse('${key}')">🗑️</button>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function deleteVerse(key) {
+  if (!confirm('هل أنت متأكد من حذف هذه الآية؟')) return;
+  const saved = getSavedData();
+  delete saved[key];
+  localStorage.setItem('memorizedVerses', JSON.stringify(saved));
+  updateStats();
+  loadSavedList();
+  updateDailyPlanDisplay();
+}
+
+// ==================== المراجعة ====================
+function startRandomReview() {
+  const saved = getSavedData();
+  const keys = Object.keys(saved);
+  
+  if (keys.length === 0) {
+    alert('لا توجد آيات محفوظة للمراجعة');
+    return;
+  }
+
+  const randomKey = keys[Math.floor(Math.random() * keys.length)];
+  const verse = saved[randomKey];
+  
+  const answer = prompt(`📖 مراجعة:\n\n${verse.surahName} - الآية ${verse.verseNumber}\n\nاكتب الآية من ذاكرتك (أو اضغط OK لرؤية الإجابة):`);
+  
+  alert(`الإجابة:\n\n${verse.text}`);
+  
+  // تسجيل المراجعة
+  const reviews = parseInt(localStorage.getItem('totalReviews') || '0') + 1;
+  localStorage.setItem('totalReviews', reviews);
+  recordActivity();
+  updateStats();
+}
+
+// ==================== التبويبات ====================
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  btn.classList.add('active');
+  
+  if (tabId === 'progress') updateStats();
+  if (tabId === 'review') loadSavedList();
+  if (tabId === 'memorize') updateDailyPlanDisplay();
+}
+
+// ==================== أدوات مساعدة ====================
+function showMessage(elementId, text, type) {
+  const el = document.getElementById(elementId);
+  el.innerHTML = `<div class="message ${type}">${text}</div>`;
+  setTimeout(() => { el.innerHTML = ''; }, 3500);
+}
+
+function showLoader(show) {
+  document.getElementById('verseLoader').classList.toggle('hidden', !show);
+}
+
+function resetData() {
+  if (!confirm('⚠️ سيتم حذف جميع بيانات الحفظ والمراجعة. هل أنت متأكد؟')) return;
+  localStorage.removeItem('memorizedVerses');
+  localStorage.removeItem('totalReviews');
+  localStorage.removeItem('activityLog');
+  localStorage.removeItem('dailyGoal');
+  state.memorizedThisSession = 0;
+  updateStats();
+  loadSavedList();
+  updateDailyPlanDisplay();
+  showMessage('memorizeMessage', 'تم حذف جميع البيانات', 'info');
+}
+
+// ==================== بدء التطبيق ====================
+init();
+</script>
+</body>
+</html>
